@@ -2,15 +2,11 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import plotly.graph_objects as go
 from scipy.stats import norm
 
-# -----------------------------
-# Streamlit page config
-# -----------------------------
-st.set_page_config(page_title="Monte Carlo 3D GBM Simulator", layout="wide")
-st.title("3D Monte Carlo Stock Price Simulation")
+st.set_page_config(page_title="Interactive 3D GBM Simulator", layout="wide")
+st.title("Interactive 3D Monte Carlo Stock Price Simulation")
 
 # -----------------------------
 # Functions
@@ -29,22 +25,19 @@ def simulate_gbm_paths(S0, r, sigma, T, steps, n_paths):
 
 def monte_carlo_option_price(paths, K, r, T, option_type='call'):
     S_T = paths[:, -1]
-    if option_type == 'call':
-        payoff = np.maximum(S_T - K, 0)
-    else:
-        payoff = np.maximum(K - S_T, 0)
+    payoff = np.maximum(S_T - K, 0) if option_type=='call' else np.maximum(K - S_T, 0)
     return np.exp(-r * T) * np.mean(payoff)
 
 def black_scholes_price(S0, K, r, sigma, T, option_type='call'):
-    d1 = (np.log(S0 / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
-    d2 = d1 - sigma * np.sqrt(T)
-    if option_type == 'call':
-        return S0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    d1 = (np.log(S0 / K) + (r + 0.5 * sigma**2)*T) / (sigma*np.sqrt(T))
+    d2 = d1 - sigma*np.sqrt(T)
+    if option_type=='call':
+        return S0*norm.cdf(d1) - K*np.exp(-r*T)*norm.cdf(d2)
     else:
-        return K * np.exp(-r * T) * norm.cdf(-d2) - S0 * norm.cdf(-d1)
+        return K*np.exp(-r*T)*norm.cdf(-d2) - S0*norm.cdf(-d1)
 
 # -----------------------------
-# User Inputs
+# Inputs
 # -----------------------------
 S0 = st.number_input("Initial Stock Price (S0)", value=100.0)
 K = st.number_input("Strike Price (K)", value=100.0)
@@ -60,26 +53,38 @@ n_paths = st.number_input("Number of Paths (reduce for cloud)", value=200)
 t, paths = simulate_gbm_paths(S0, r, sigma, T, steps, n_paths)
 
 # -----------------------------
-# 3D Plot
+# Interactive 3D Plot with Plotly
 # -----------------------------
-fig = plt.figure(figsize=(10,6))
-ax = fig.add_subplot(111, projection='3d')
-ax.set_facecolor('#222222')
+fig = go.Figure()
+for i in range(min(50, n_paths)):
+    fig.add_trace(go.Scatter3d(
+        x=t,
+        y=[i]*len(t),
+        z=paths[i],
+        mode='lines',
+        line=dict(width=2),
+        name=f'Path {i}'
+    ))
 
-# Plot multiple GBM paths
-for i in range(min(50, n_paths)):  # show only 50 paths for clarity
-    ax.plot(t, np.full_like(t, i), paths[i], lw=1, alpha=0.7)
+fig.update_layout(
+    scene=dict(
+        xaxis_title='Time',
+        yaxis_title='Path Index',
+        zaxis_title='Stock Price',
+        xaxis=dict(backgroundcolor="rgb(34,34,34)", color="white"),
+        yaxis=dict(backgroundcolor="rgb(34,34,34)", color="white"),
+        zaxis=dict(backgroundcolor="rgb(34,34,34)", color="white")
+    ),
+    paper_bgcolor='rgb(34,34,34)',
+    plot_bgcolor='rgb(34,34,34)',
+    font=dict(color='white'),
+    margin=dict(l=0, r=0, t=40, b=0)
+)
 
-ax.set_xlabel('Time', color='white')
-ax.set_ylabel('Path Index', color='white')
-ax.set_zlabel('Stock Price', color='white')
-ax.set_title('3D Monte Carlo GBM Paths', color='white')
-ax.tick_params(colors='white')
-
-st.pyplot(fig)
+st.plotly_chart(fig, use_container_width=True)
 
 # -----------------------------
-# Monte Carlo & Black-Scholes
+# Monte Carlo & Black-Scholes Prices
 # -----------------------------
 mc_call = monte_carlo_option_price(paths, K, r, T, option_type='call')
 mc_put = monte_carlo_option_price(paths, K, r, T, option_type='put')
