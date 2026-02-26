@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import norm
 
+# -----------------------------
+# Streamlit page config
+# -----------------------------
 st.set_page_config(page_title="Monte Carlo 3D GBM Simulator", layout="wide")
 st.title("3D Monte Carlo Stock Price Simulation")
 
@@ -62,10 +65,8 @@ t, paths = simulate_gbm_paths(S0, r, sigma, T, steps, n_paths)
 fig = plt.figure(figsize=(10,6))
 ax = fig.add_subplot(111, projection='3d')
 ax.set_facecolor('#222222')
-ax.w_xaxis.set_pane_color((0.13, 0.13, 0.13, 1))
-ax.w_yaxis.set_pane_color((0.13, 0.13, 0.13, 1))
-ax.w_zaxis.set_pane_color((0.13, 0.13, 0.13, 1))
 
+# Plot multiple GBM paths
 for i in range(min(50, n_paths)):  # show only 50 paths for clarity
     ax.plot(t, np.full_like(t, i), paths[i], lw=1, alpha=0.7)
 
