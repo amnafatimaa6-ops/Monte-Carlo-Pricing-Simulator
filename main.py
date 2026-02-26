@@ -37,30 +37,40 @@ def black_scholes_price(S0, K, r, sigma, T, option_type='call'):
         return K*np.exp(-r*T)*norm.cdf(-d2) - S0*norm.cdf(-d1)
 
 # -----------------------------
-# Inputs
+# User Inputs
 # -----------------------------
-S0 = st.number_input("Initial Stock Price (S0)", value=100.0)
-K = st.number_input("Strike Price (K)", value=100.0)
-r = st.number_input("Risk-free Rate (r)", value=0.05)
-sigma = st.number_input("Volatility (σ)", value=0.2)
-T = st.number_input("Time to Maturity (years)", value=1.0)
-steps = st.number_input("Steps per Path", value=252)
-n_paths = st.number_input("Number of Paths (reduce for cloud)", value=200)
+S0 = st.sidebar.number_input("Initial Stock Price (S0)", value=100.0)
+K = st.sidebar.number_input("Strike Price (K)", value=100.0)
+r = st.sidebar.number_input("Risk-free Rate (r)", value=0.05)
+sigma = st.sidebar.number_input("Volatility (σ)", value=0.2)
+T = st.sidebar.number_input("Time to Maturity (years)", value=1.0)
+steps = st.sidebar.number_input("Steps per Path", value=252)
+n_paths_total = st.sidebar.number_input("Total Paths to Simulate", value=200)
+
+# Slider for number of paths to display
+n_paths_display = st.sidebar.slider("Number of Paths to Display (3D Plot)", 1, min(50, n_paths_total), value=20)
+
+# Slider for step range to display
+step_start, step_end = st.sidebar.slider("Time Step Range", 0, steps, (0, steps))
 
 # -----------------------------
 # Simulate GBM
 # -----------------------------
-t, paths = simulate_gbm_paths(S0, r, sigma, T, steps, n_paths)
+t, paths = simulate_gbm_paths(S0, r, sigma, T, steps, n_paths_total)
+
+# Slice paths based on step slider
+t_slice = t[step_start:step_end+1]
+paths_slice = paths[:n_paths_display, step_start:step_end+1]
 
 # -----------------------------
 # Interactive 3D Plot with Plotly
 # -----------------------------
 fig = go.Figure()
-for i in range(min(50, n_paths)):
+for i in range(n_paths_display):
     fig.add_trace(go.Scatter3d(
-        x=t,
-        y=[i]*len(t),
-        z=paths[i],
+        x=t_slice,
+        y=[i]*len(t_slice),
+        z=paths_slice[i],
         mode='lines',
         line=dict(width=2),
         name=f'Path {i}'
