@@ -3,14 +3,11 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation, PillowWriter
+from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import norm
 
-# -----------------------------
-# Streamlit page config
-# -----------------------------
-st.set_page_config(page_title="Monte Carlo Option Pricing Simulator", layout="wide")
-st.title("Monte Carlo Stock Price Simulation")
+st.set_page_config(page_title="Monte Carlo 3D GBM Simulator", layout="wide")
+st.title("3D Monte Carlo Stock Price Simulation")
 
 # -----------------------------
 # Functions
@@ -55,9 +52,34 @@ steps = st.number_input("Steps per Path", value=252)
 n_paths = st.number_input("Number of Paths (reduce for cloud)", value=200)
 
 # -----------------------------
-# Simulate GBM and price options
+# Simulate GBM
 # -----------------------------
 t, paths = simulate_gbm_paths(S0, r, sigma, T, steps, n_paths)
+
+# -----------------------------
+# 3D Plot
+# -----------------------------
+fig = plt.figure(figsize=(10,6))
+ax = fig.add_subplot(111, projection='3d')
+ax.set_facecolor('#222222')
+ax.w_xaxis.set_pane_color((0.13, 0.13, 0.13, 1))
+ax.w_yaxis.set_pane_color((0.13, 0.13, 0.13, 1))
+ax.w_zaxis.set_pane_color((0.13, 0.13, 0.13, 1))
+
+for i in range(min(50, n_paths)):  # show only 50 paths for clarity
+    ax.plot(t, np.full_like(t, i), paths[i], lw=1, alpha=0.7)
+
+ax.set_xlabel('Time', color='white')
+ax.set_ylabel('Path Index', color='white')
+ax.set_zlabel('Stock Price', color='white')
+ax.set_title('3D Monte Carlo GBM Paths', color='white')
+ax.tick_params(colors='white')
+
+st.pyplot(fig)
+
+# -----------------------------
+# Monte Carlo & Black-Scholes
+# -----------------------------
 mc_call = monte_carlo_option_price(paths, K, r, T, option_type='call')
 mc_put = monte_carlo_option_price(paths, K, r, T, option_type='put')
 bs_call = black_scholes_price(S0, K, r, sigma, T, option_type='call')
@@ -72,35 +94,6 @@ df_prices = pd.DataFrame({
     'Put Price': [mc_put, bs_put]
 })
 
-# -----------------------------
-# Plot GBM paths and save as GIF
-# -----------------------------
-fig, ax = plt.subplots(figsize=(10,6))
-ax.set_facecolor('#222222')
-ax.tick_params(colors='white')
-ax.spines['bottom'].set_color('white')
-ax.spines['left'].set_color('white')
-ax.set_xlim(0, T)
-ax.set_ylim(np.min(paths), np.max(paths))
-ax.set_xlabel('Time (years)', color='white')
-ax.set_ylabel('Stock Price', color='white')
-ax.set_title('Monte Carlo Stock Price Simulation', color='white')
-
-lines = [ax.plot([], [], lw=1, alpha=0.5)[0] for _ in range(min(20, n_paths))]
-
-def animate(i):
-    for j, line in enumerate(lines):
-        line.set_data(t[:i], paths[j, :i])
-    return lines
-
-ani = FuncAnimation(fig, animate, frames=len(t), interval=20, blit=True)
-ani.save("animation.gif", writer=PillowWriter(fps=30))
-
-st.image("animation.gif")  # display animation in Streamlit
-
-# -----------------------------
-# Display option prices
-# -----------------------------
 st.subheader("Option Price Comparison")
 st.dataframe(df_prices)
 
