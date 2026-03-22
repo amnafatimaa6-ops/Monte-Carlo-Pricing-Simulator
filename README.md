@@ -1,4 +1,9 @@
 📈 Interactive 3D Monte Carlo Stock Price Simulator
+--- 
+APP link 
+https://monte-carlo-pricing-simulator-cvhabuvmmamervmm5pctvj.streamlit.app/
+
+---
 
 An advanced financial simulation project that visualizes Geometric Brownian Motion (GBM) in 3D and compares Monte Carlo pricing with the Black–Scholes analytical model — all wrapped in an interactive Streamlit dashboard.
 
