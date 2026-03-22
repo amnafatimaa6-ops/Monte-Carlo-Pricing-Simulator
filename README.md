@@ -46,7 +46,6 @@ Data Visualization (Plotly + Matplotlib)
 
 ---
 
-🖥️ Demo
 🎥 3D Plot Demo
 
 
